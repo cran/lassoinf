@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Surrogate screening: swapping selected and screened variables</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Surrogate screening: swapping selected and
+screened variables</h1>
+
+
+
+<p>After the LASSO selects an active set <span class="math inline">\(E\)</span>, a common heuristic screens the
+inactive variables whose gradient at the LASSO solution, <span class="math inline">\(|\nabla \ell(\hat{\beta})_j|\)</span>, is largest.
+<code>ScreenedSelection</code> adds this screening step to the selection
+event, so the polyhedral lemma still gives valid inference. The usual
+question is whether a screened variable <span class="math inline">\(j\)</span> belongs in the model <span class="math inline">\(E \cup \{j\}\)</span>.</p>
+<p>Here we screen the same way, keeping the <strong>top 10</strong>
+inactive variables, but ask a different question. A screened variable
+<span class="math inline">\(j\)</span> may be a <em>surrogate</em> for a
+selected variable <span class="math inline">\(s\)</span>: the two are
+correlated and the LASSO picked <span class="math inline">\(s\)</span>
+where it could have picked <span class="math inline">\(j\)</span>. To
+check this, for each selected <span class="math inline">\(s \in
+E\)</span> and screened <span class="math inline">\(j\)</span> we drop
+<span class="math inline">\(s\)</span> from the model, put <span class="math inline">\(j\)</span> in its place, and test</p>
+<p><span class="math display">\[
+H_0: \beta_{j \cdot F_{s,j}} = 0, \qquad F_{s,j} = (E \setminus \{s\})
+\cup \{j\},
+\]</span></p>
+<p>the coefficient of <span class="math inline">\(x_j\)</span> in the
+model <span class="math inline">\(F_{s,j}\)</span>, or build a
+confidence interval for it.</p>
+<p>Only the <strong>target</strong> changes. The selection event (LASSO,
+then screening) stays the same, so we reuse
+<code>ScreenedSelection</code> as it is and pass it a new contrast.</p>
+<div id="the-swapped-coefficient-as-a-contrast" class="section level2">
+<h2>The swapped coefficient as a contrast</h2>
+<p>With <span class="math inline">\(Q = X&#39;X\)</span> and <span class="math inline">\(W = Q_{E,E}^{-1}\)</span>, the coefficient of
+<span class="math inline">\(j\)</span> in <span class="math inline">\(F
+= F_{s,j}\)</span> is</p>
+<p><span class="math display">\[
+\hat{\theta}_{s,j} = e_j&#39;\, Q_{F,F}^{-1} Z_F = \eta_{s,j}&#39; Z,
+\qquad
+(\eta_{s,j})_F = Q_{F,F}^{-1} e_j, \quad (\eta_{s,j})_{-F} = 0,
+\]</span></p>
+<p>which for least squares is the coefficient of <span class="math inline">\(x_j\)</span> in the regression of <span class="math inline">\(y\)</span> on <span class="math inline">\(X_F\)</span>. The estimand is <span class="math inline">\(\eta_{s,j}&#39; X&#39;\mu\)</span>, the
+coefficient of <span class="math inline">\(x_j\)</span> in the
+regression of <span class="math inline">\(\mu = E[y]\)</span> on <span class="math inline">\(X_F\)</span>.</p>
+<p>The matrix <span class="math inline">\(Q_{F,F}\)</span> is built from
+the information matrix of the model <span class="math inline">\(E\)</span>. Its block on <span class="math inline">\(E \setminus \{s\}\)</span> is a submatrix of <span class="math inline">\(Q_{E,E} = W^{-1}\)</span>, which we already have.
+The rest is <span class="math inline">\(Q_{j,E \setminus \{s\}}\)</span>
+and <span class="math inline">\(Q_{jj}\)</span>, which come from one
+matvec <span class="math inline">\(Q e_j\)</span> per screened variable,
+shared by all <span class="math inline">\(s\)</span>. For a GLM, <span class="math inline">\(Q\)</span> is the <code>Q_hat</code> used for
+selection. We do not refit the model <span class="math inline">\(F\)</span> or recompute its information
+matrix.</p>
+<p>Equivalently, with <span class="math inline">\(G = E \cup
+\{j\}\)</span> and <span class="math inline">\(M =
+Q_{G,G}^{-1}\)</span>, dropping <span class="math inline">\(s\)</span>
+from <span class="math inline">\(G\)</span> gives</p>
+<p><span class="math display">\[
+\hat{\theta}_{s,j} = \hat{\beta}_{j \cdot G} - \frac{M_{js}}{M_{ss}}\,
+\hat{\beta}_{s \cdot G}.
+\]</span></p>
+<p>This is the screened coefficient of <span class="math inline">\(j\)</span> minus a multiple of the coefficient of
+<span class="math inline">\(s\)</span> in the same model. Because <span class="math inline">\(x_j\)</span> and <span class="math inline">\(x_s\)</span> are correlated, part of the effect of
+<span class="math inline">\(s\)</span> moves onto <span class="math inline">\(j\)</span>. The contrast is linear in <span class="math inline">\(Z\)</span>, so the polyhedral lemma applies with
+the screening constraints we already have.</p>
+</div>
+<div id="setup" class="section level2">
+<h2>Setup</h2>
+<p>We use two designs, each with <span class="math inline">\(n =
+100\)</span> observations, <span class="math inline">\(p = 300\)</span>
+features and 15 nonzero coefficients on every 20th feature, and <span class="math inline">\(\sigma^2 = 1\)</span> treated as known:</p>
+<ol style="list-style-type: decimal">
+<li><strong>Independent features</strong> with signals of size <span class="math inline">\(3/\sqrt{n}\)</span>. Here, ignoring the screening
+step badly breaks inference.</li>
+<li><strong>AR(1) features</strong>, with <span class="math inline">\(\text{corr}(x_i, x_l) = \rho^{|i - l|}\)</span>,
+<span class="math inline">\(\rho = 0.8\)</span>, and signals of size
+<span class="math inline">\(5/\sqrt{n}\)</span>. Each signal’s neighbors
+are correlated null features that can stand in for it, so this design
+produces surrogates.</li>
+</ol>
+<p>Selection uses a randomized response <span class="math inline">\(y_{noisy} = y + \epsilon\)</span> with <span class="math inline">\(\epsilon \sim N(0, \frac{1-\pi}{\pi}\sigma^2
+I)\)</span> and <span class="math inline">\(\pi = 0.8\)</span>.</p>
+<p>The package reports variables (<code>li$E</code>,
+<code>screen$screened</code>) 0-based. In this vignette we add 1 and
+work with ordinary R indices.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lassoinf)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">100</span>; p <span class="ot">&lt;-</span> <span class="dv">300</span>; k <span class="ot">&lt;-</span> <span class="dv">15</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>pi_selection <span class="ot">&lt;-</span> <span class="fl">0.8</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>scalar_noise <span class="ot">&lt;-</span> (<span class="dv">1</span> <span class="sc">-</span> pi_selection) <span class="sc">/</span> pi_selection   <span class="co"># Var(omega) = scalar_noise * Sigma</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>signals <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="dv">1</span>, p, <span class="at">by =</span> p <span class="sc">/</span> k)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>make_data <span class="ot">&lt;-</span> <span class="cf">function</span>(rho, amp) {</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># AR(1) columns: corr(x_i, x_l) = rho^|i - l|; rho = 0 gives independent columns</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  X <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(n <span class="sc">*</span> p), n, p)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span>p) X[, i] <span class="ot">&lt;-</span> rho <span class="sc">*</span> X[, i <span class="sc">-</span> <span class="dv">1</span>] <span class="sc">+</span> <span class="fu">sqrt</span>(<span class="dv">1</span> <span class="sc">-</span> rho<span class="sc">^</span><span class="dv">2</span>) <span class="sc">*</span> X[, i]</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  beta <span class="ot">&lt;-</span> <span class="fu">numeric</span>(p)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  beta[signals] <span class="ot">&lt;-</span> amp <span class="sc">/</span> <span class="fu">sqrt</span>(n) <span class="sc">*</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="dv">1</span>), k, <span class="at">replace =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  mu <span class="ot">&lt;-</span> <span class="fu">drop</span>(X <span class="sc">%*%</span> beta)</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  y <span class="ot">&lt;-</span> mu <span class="sc">+</span> <span class="fu">rnorm</span>(n)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  y_noisy <span class="ot">&lt;-</span> y <span class="sc">+</span> <span class="fu">rnorm</span>(n, <span class="at">sd =</span> <span class="fu">sqrt</span>(scalar_noise))</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">X =</span> X, <span class="at">beta =</span> beta, <span class="at">mu =</span> mu, <span class="at">y =</span> y, <span class="at">y_noisy =</span> y_noisy)</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>We fit the LASSO <span class="math inline">\(\frac{1}{2}\|y_{noisy} -
+Xb\|^2 + \lambda \|b\|_1\)</span> with <code>glmnet</code>. glmnet
+scales the loss by <span class="math inline">\(1/n\)</span>, so we pass
+it <span class="math inline">\(\lambda / n\)</span>. <span class="math inline">\(Q = X&#39;X\)</span> and <span class="math inline">\(\Sigma = \sigma^2 X&#39;X\)</span> are matrix-free
+operators.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>lam <span class="ot">&lt;-</span> <span class="fl">0.8</span> <span class="sc">*</span> <span class="fu">sqrt</span>(<span class="dv">2</span> <span class="sc">*</span> n <span class="sc">*</span> <span class="fu">log</span>(p))</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>lasso_inference <span class="ot">&lt;-</span> <span class="cf">function</span>(d) {</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  fit <span class="ot">&lt;-</span> glmnet<span class="sc">::</span><span class="fu">glmnet</span>(d<span class="sc">$</span>X, d<span class="sc">$</span>y_noisy, <span class="at">lambda =</span> lam <span class="sc">/</span> n, <span class="at">intercept =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>                        <span class="at">standardize =</span> <span class="cn">FALSE</span>, <span class="at">control =</span> <span class="fu">list</span>(<span class="at">thresh =</span> <span class="fl">1e-14</span>))</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  beta_hat <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(<span class="fu">coef</span>(fit))[<span class="sc">-</span><span class="dv">1</span>]</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  beta_hat[<span class="fu">abs</span>(beta_hat) <span class="sc">&lt;</span> <span class="fl">1e-6</span>] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  G_hat <span class="ot">&lt;-</span> <span class="fu">drop</span>(<span class="fu">crossprod</span>(d<span class="sc">$</span>X, d<span class="sc">$</span>X <span class="sc">%*%</span> beta_hat <span class="sc">-</span> d<span class="sc">$</span>y_noisy))</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  Q <span class="ot">&lt;-</span> <span class="fu">xtvx_operator</span>(d<span class="sc">$</span>X)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  LassoInference<span class="sc">$</span><span class="fu">new</span>(beta_hat, G_hat, Q, <span class="fu">rep</span>(lam, p), <span class="cn">NULL</span>, <span class="cn">NULL</span>,</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>                     <span class="fu">drop</span>(<span class="fu">crossprod</span>(d<span class="sc">$</span>X, d<span class="sc">$</span>y)), Q, <span class="cn">NULL</span>, scalar_noise, <span class="at">level =</span> <span class="fl">0.9</span>)</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div id="swap-estimands" class="section level3">
+<h3>Swap estimands</h3>
+<p><code>swap_estimands</code> builds the contrasts <span class="math inline">\(\eta_{s,j}\)</span>. It stores <span class="math inline">\(Q_{E,E} = W^{-1}\)</span> and caches the column
+<span class="math inline">\(Q e_j\)</span> of each screened variable.
+Each contrast then costs one <span class="math inline">\(|E| \times
+|E|\)</span> solve.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>swap_estimands <span class="ot">&lt;-</span> <span class="cf">function</span>(li) {</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  E <span class="ot">&lt;-</span> li<span class="sc">$</span>E <span class="sc">+</span> <span class="dv">1</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  Q_EE <span class="ot">&lt;-</span> <span class="fu">solve</span>(li<span class="sc">$</span>W)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  Q_EE <span class="ot">&lt;-</span> (Q_EE <span class="sc">+</span> <span class="fu">t</span>(Q_EE)) <span class="sc">/</span> <span class="dv">2</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  cache <span class="ot">&lt;-</span> <span class="fu">new.env</span>()</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  column <span class="ot">&lt;-</span> <span class="cf">function</span>(j) {</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    key <span class="ot">&lt;-</span> <span class="fu">as.character</span>(j)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">is.null</span>(cache[[key]])) {</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>      e_j <span class="ot">&lt;-</span> <span class="fu">numeric</span>(p); e_j[j] <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>      cache[[key]] <span class="ot">&lt;-</span> <span class="fu">drop</span>(li<span class="sc">$</span>Q_hat<span class="sc">$</span><span class="fu">multiply</span>(e_j))</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    cache[[key]]</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>  <span class="co"># F = (E minus {s}) plus {j}, with j last</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>  model <span class="ot">&lt;-</span> <span class="cf">function</span>(s, j) <span class="fu">c</span>(E[E <span class="sc">!=</span> s], j)</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>  swap_coef <span class="ot">&lt;-</span> <span class="cf">function</span>(s, j) {</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="sc">!</span>(s <span class="sc">%in%</span> E) <span class="sc">||</span> j <span class="sc">%in%</span> E) <span class="fu">stop</span>(<span class="st">&quot;need s in E and j not in E&quot;</span>)</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>    Q_j <span class="ot">&lt;-</span> <span class="fu">column</span>(j)</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    keep <span class="ot">&lt;-</span> E <span class="sc">!=</span> s</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    F <span class="ot">&lt;-</span> <span class="fu">model</span>(s, j)</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>    m <span class="ot">&lt;-</span> <span class="fu">length</span>(F)</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>    Q_FF <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, m, m)</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>    Q_FF[<span class="sc">-</span>m, <span class="sc">-</span>m] <span class="ot">&lt;-</span> Q_EE[keep, keep]</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>    Q_FF[<span class="sc">-</span>m, m] <span class="ot">&lt;-</span> Q_FF[m, <span class="sc">-</span>m] <span class="ot">&lt;-</span> Q_j[F[<span class="sc">-</span>m]]</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>    Q_FF[m, m] <span class="ot">&lt;-</span> Q_j[j]</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>    eta <span class="ot">&lt;-</span> <span class="fu">numeric</span>(p)</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>    eta[F] <span class="ot">&lt;-</span> <span class="fu">solve</span>(Q_FF, <span class="fu">c</span>(<span class="fu">numeric</span>(m <span class="sc">-</span> <span class="dv">1</span>), <span class="dv">1</span>))</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>    <span class="fu">contrast_estimand</span>(eta)</span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">model =</span> model, <span class="at">swap_coef =</span> swap_coef)</span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p><code>analyze</code> runs the whole pipeline on one data set. It fits
+the LASSO, screens the top 10 inactive variables with the unchanged
+<code>ScreenedSelection</code>, and then loops over every pair <span class="math inline">\((s, j)\)</span>, giving <span class="math inline">\(|E| \times 10\)</span> estimands.
+<code>estimand_summary</code> with the <code>ScreenedSelection</code>
+conditions on both selection steps. The target <span class="math inline">\(\eta_{s,j}&#39; X&#39;\mu\)</span> is shown in the
+<code>truth</code> column.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>swap_table <span class="ot">&lt;-</span> <span class="cf">function</span>(selection, swaps, selected, screened) {</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  pairs <span class="ot">&lt;-</span> <span class="fu">expand.grid</span>(<span class="at">added =</span> screened, <span class="at">dropped =</span> selected)[, <span class="fu">c</span>(<span class="st">&quot;dropped&quot;</span>, <span class="st">&quot;added&quot;</span>)]</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  estimands <span class="ot">&lt;-</span> <span class="fu">Map</span>(swaps<span class="sc">$</span>swap_coef, pairs<span class="sc">$</span>dropped, pairs<span class="sc">$</span>added)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">names</span>(estimands) <span class="ot">&lt;-</span> <span class="fu">paste</span>(pairs<span class="sc">$</span>dropped, pairs<span class="sc">$</span>added, <span class="at">sep =</span> <span class="st">&quot;:&quot;</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  df <span class="ot">&lt;-</span> <span class="fu">estimand_summary</span>(selection, estimands)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">table =</span> <span class="fu">cbind</span>(pairs, df[, <span class="sc">-</span><span class="dv">1</span>]), <span class="at">estimands =</span> estimands)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>analyze <span class="ot">&lt;-</span> <span class="cf">function</span>(d) {</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  li <span class="ot">&lt;-</span> <span class="fu">lasso_inference</span>(d)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  screen <span class="ot">&lt;-</span> ScreenedSelection<span class="sc">$</span><span class="fu">new</span>(li, <span class="at">top_k =</span> <span class="dv">10</span>)</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  swaps <span class="ot">&lt;-</span> <span class="fu">swap_estimands</span>(li)</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>  E <span class="ot">&lt;-</span> li<span class="sc">$</span>E <span class="sc">+</span> <span class="dv">1</span>; screened <span class="ot">&lt;-</span> screen<span class="sc">$</span>screened <span class="sc">+</span> <span class="dv">1</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="fu">length</span>(E), <span class="st">&quot;active variables,&quot;</span>, <span class="fu">sum</span>(d<span class="sc">$</span>beta[E] <span class="sc">!=</span> <span class="dv">0</span>), <span class="st">&quot;of them true signals;&quot;</span>,</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>      <span class="fu">sum</span>(d<span class="sc">$</span>beta[<span class="sc">-</span>E] <span class="sc">!=</span> <span class="dv">0</span>), <span class="st">&quot;true signals were left out</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;screened:&quot;</span>, screened, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  st <span class="ot">&lt;-</span> <span class="fu">swap_table</span>(screen, swaps, E, screened)</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>  tab <span class="ot">&lt;-</span> st<span class="sc">$</span>table</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>  tab<span class="sc">$</span>truth <span class="ot">&lt;-</span> <span class="fu">sapply</span>(st<span class="sc">$</span>estimands, estimand_value, <span class="at">Z =</span> <span class="fu">drop</span>(<span class="fu">crossprod</span>(d<span class="sc">$</span>X, d<span class="sc">$</span>mu)))</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>  tab<span class="sc">$</span>dropped_signal <span class="ot">&lt;-</span> d<span class="sc">$</span>beta[tab<span class="sc">$</span>dropped] <span class="sc">!=</span> <span class="dv">0</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>  tab<span class="sc">$</span>added_signal <span class="ot">&lt;-</span> d<span class="sc">$</span>beta[tab<span class="sc">$</span>added] <span class="sc">!=</span> <span class="dv">0</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>  tab<span class="sc">$</span>adjacent <span class="ot">&lt;-</span> <span class="fu">abs</span>(tab<span class="sc">$</span>dropped <span class="sc">-</span> tab<span class="sc">$</span>added) <span class="sc">&lt;=</span> <span class="dv">2</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rownames</span>(tab) <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">li =</span> li, <span class="at">screen =</span> screen, <span class="at">swaps =</span> swaps, <span class="at">E =</span> E, <span class="at">screened =</span> screened,</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>       <span class="at">table =</span> tab, <span class="at">estimands =</span> st<span class="sc">$</span>estimands)</span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>p_value_grid <span class="ot">&lt;-</span> <span class="cf">function</span>(tab) <span class="fu">round</span>(<span class="fu">xtabs</span>(p_value <span class="sc">~</span> dropped <span class="sc">+</span> added, tab), <span class="dv">3</span>)</span></code></pre></div>
+<p>To compare, we also compute the LASSO-only tests, which use the LASSO
+constraints but ignore the screening step, and naive tests that ignore
+selection altogether:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>naive_p_value <span class="ot">&lt;-</span> <span class="cf">function</span>(li, est) {</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  sd <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(li<span class="sc">$</span>si<span class="sc">$</span><span class="fu">compute_contrast</span>(est<span class="sc">$</span>eta)<span class="sc">$</span>naive_variance)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="dv">2</span> <span class="sc">*</span> <span class="fu">pnorm</span>(<span class="sc">-</span><span class="fu">abs</span>(<span class="fu">estimand_value</span>(est, li<span class="sc">$</span>Z_full)) <span class="sc">/</span> sd)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>compare_p_values <span class="ot">&lt;-</span> <span class="cf">function</span>(a) {</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  lasso_only <span class="ot">&lt;-</span> <span class="fu">swap_table</span>(a<span class="sc">$</span>li, a<span class="sc">$</span>swaps, a<span class="sc">$</span>E, a<span class="sc">$</span>screened)<span class="sc">$</span>table</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(a<span class="sc">$</span>table[, <span class="fu">c</span>(<span class="st">&quot;dropped&quot;</span>, <span class="st">&quot;added&quot;</span>)],</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>             <span class="at">screened =</span> a<span class="sc">$</span>table<span class="sc">$</span>p_value,</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>             <span class="at">lasso_only =</span> lasso_only<span class="sc">$</span>p_value,</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>             <span class="at">naive =</span> <span class="fu">sapply</span>(a<span class="sc">$</span>estimands, naive_p_value, <span class="at">li =</span> a<span class="sc">$</span>li), <span class="at">row.names =</span> <span class="cn">NULL</span>)</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>For repeated experiments, we record for each pair <span class="math inline">\((s, j)\)</span> whether the 90% interval covers
+<span class="math inline">\(\eta_{s,j}&#39; X&#39;\mu\)</span>, and
+whether the test rejects at level 0.1. Intervals from the same data set
+are dependent, so the averages are over both replications and pairs.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>one_replication <span class="ot">&lt;-</span> <span class="cf">function</span>(rho, amp) {</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  d <span class="ot">&lt;-</span> <span class="fu">make_data</span>(rho, amp)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  li <span class="ot">&lt;-</span> <span class="fu">lasso_inference</span>(d)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  screen <span class="ot">&lt;-</span> ScreenedSelection<span class="sc">$</span><span class="fu">new</span>(li, <span class="at">top_k =</span> <span class="dv">10</span>)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  swaps <span class="ot">&lt;-</span> <span class="fu">swap_estimands</span>(li)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  Z_mu <span class="ot">&lt;-</span> <span class="fu">drop</span>(<span class="fu">crossprod</span>(d<span class="sc">$</span>X, d<span class="sc">$</span>mu))</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  q <span class="ot">&lt;-</span> <span class="fu">qnorm</span>(<span class="fl">0.95</span>)</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  rows <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (s <span class="cf">in</span> li<span class="sc">$</span>E <span class="sc">+</span> <span class="dv">1</span>) <span class="cf">for</span> (j <span class="cf">in</span> screen<span class="sc">$</span>screened <span class="sc">+</span> <span class="dv">1</span>) {</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    est <span class="ot">&lt;-</span> swaps<span class="sc">$</span><span class="fu">swap_coef</span>(s, j)</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    target <span class="ot">&lt;-</span> <span class="fu">estimand_value</span>(est, Z_mu)</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    sd <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(li<span class="sc">$</span>si<span class="sc">$</span><span class="fu">compute_contrast</span>(est<span class="sc">$</span>eta)<span class="sc">$</span>naive_variance)</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    theta <span class="ot">&lt;-</span> <span class="fu">estimand_value</span>(est, li<span class="sc">$</span>Z_full)</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    info <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">dropped_signal =</span> d<span class="sc">$</span>beta[s] <span class="sc">!=</span> <span class="dv">0</span>, <span class="at">added_signal =</span> d<span class="sc">$</span>beta[j] <span class="sc">!=</span> <span class="dv">0</span>,</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>                       <span class="at">adjacent =</span> <span class="fu">abs</span>(s <span class="sc">-</span> j) <span class="sc">&lt;=</span> <span class="dv">2</span>)</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (method <span class="cf">in</span> <span class="fu">c</span>(<span class="st">&quot;screened&quot;</span>, <span class="st">&quot;lasso only&quot;</span>)) {</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>      res <span class="ot">&lt;-</span> <span class="fu">contrast_inference</span>(<span class="cf">if</span> (method <span class="sc">==</span> <span class="st">&quot;screened&quot;</span>) screen <span class="cf">else</span> li, est)</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>      rows[[<span class="fu">length</span>(rows) <span class="sc">+</span> <span class="dv">1</span>]] <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">method =</span> method,</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>        <span class="at">cover =</span> res<span class="sc">$</span>lower_conf <span class="sc">&lt;=</span> target <span class="sc">&amp;&amp;</span> target <span class="sc">&lt;=</span> res<span class="sc">$</span>upper_conf,</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>        <span class="at">length =</span> res<span class="sc">$</span>upper_conf <span class="sc">-</span> res<span class="sc">$</span>lower_conf, <span class="at">reject =</span> res<span class="sc">$</span>p_value <span class="sc">&lt;</span> <span class="fl">0.1</span>, info)</span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>    rows[[<span class="fu">length</span>(rows) <span class="sc">+</span> <span class="dv">1</span>]] <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">method =</span> <span class="st">&quot;naive&quot;</span>, <span class="at">cover =</span> <span class="fu">abs</span>(theta <span class="sc">-</span> target) <span class="sc">&lt;=</span> q <span class="sc">*</span> sd,</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>      <span class="at">length =</span> <span class="dv">2</span> <span class="sc">*</span> q <span class="sc">*</span> sd, <span class="at">reject =</span> <span class="fu">abs</span>(theta) <span class="sc">&gt;</span> q <span class="sc">*</span> sd, info)</span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">do.call</span>(rbind, rows)</span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>simulate <span class="ot">&lt;-</span> <span class="cf">function</span>(rho, amp, nsim, <span class="at">seed =</span> <span class="dv">1</span>) {</span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set.seed</span>(seed)</span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">do.call</span>(rbind, <span class="fu">replicate</span>(nsim, <span class="fu">one_replication</span>(rho, amp), <span class="at">simplify =</span> <span class="cn">FALSE</span>))</span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>coverage_table <span class="ot">&lt;-</span> <span class="cf">function</span>(results) {</span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">coverage =</span> <span class="fu">tapply</span>(results<span class="sc">$</span>cover, results<span class="sc">$</span>method, mean),</span>
+<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a>             <span class="at">median_length =</span> <span class="fu">tapply</span>(results<span class="sc">$</span>length, results<span class="sc">$</span>method, median))</span>
+<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+</div>
+</div>
+<div id="example-1-independent-features" class="section level2">
+<h2>Example 1: independent features</h2>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">0</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> <span class="fu">make_data</span>(<span class="at">rho =</span> <span class="dv">0</span>, <span class="at">amp =</span> <span class="dv">3</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>a <span class="ot">&lt;-</span> <span class="fu">analyze</span>(d)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6 active variables, 1 of them true signals; 14 true signals were left out</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; screened: 21 275 112 128 115 297 253 81 279 125</span></span></code></pre></div>
+<p>As a check, the estimate is the least squares coefficient of <span class="math inline">\(x_j\)</span> on <span class="math inline">\(X_F\)</span>:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>s <span class="ot">&lt;-</span> a<span class="sc">$</span>E[<span class="dv">1</span>]; j <span class="ot">&lt;-</span> a<span class="sc">$</span>screened[<span class="dv">1</span>]</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>F <span class="ot">&lt;-</span> a<span class="sc">$</span>swaps<span class="sc">$</span><span class="fu">model</span>(s, j)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">c</span>(<span class="at">ols =</span> <span class="fu">unname</span>(<span class="fu">tail</span>(<span class="fu">qr.solve</span>(d<span class="sc">$</span>X[, F], d<span class="sc">$</span>y), <span class="dv">1</span>)),</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">swap =</span> <span class="fu">estimand_value</span>(a<span class="sc">$</span>swaps<span class="sc">$</span><span class="fu">swap_coef</span>(s, j), a<span class="sc">$</span>li<span class="sc">$</span>Z_full))</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      ols     swap </span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0.171792 0.171792</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(a<span class="sc">$</span>table, <span class="dv">10</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    dropped added   estimate  lower_conf upper_conf    p_value        truth</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1        5    21  0.1717920 -0.09606102  0.6231150 0.22803446  0.254789202</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2        5   275  0.1624549 -0.28531803  0.3926296 0.79441827  0.010198638</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3        5   112 -0.1611645 -0.47233129  0.2600691 0.63349694  0.022210276</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4        5   128 -0.1005752 -0.28404646  0.4191999 0.75206212 -0.073187870</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5        5   115 -0.1640124 -0.34248901  0.3208632 0.95714797 -0.006686096</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6        5   297  0.1543233 -0.32956066  0.4441427 0.80744458  0.139615442</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 7        5   253 -0.1077188 -0.11600897  0.6941805 0.24067268 -0.062439529</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 8        5    81  0.2888889  0.04214024  0.8487525 0.06925875  0.295175157</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 9        5   279 -0.1084395 -0.24839617  0.5555619 0.52974231 -0.040221170</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10       5   125  0.2368126 -0.19905394  0.5475778 0.44259914  0.040440723</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    dropped_signal added_signal adjacent</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1           FALSE         TRUE    FALSE</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2           FALSE        FALSE    FALSE</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3           FALSE        FALSE    FALSE</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4           FALSE        FALSE    FALSE</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5           FALSE        FALSE    FALSE</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6           FALSE        FALSE    FALSE</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 7           FALSE        FALSE    FALSE</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 8           FALSE         TRUE    FALSE</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 9           FALSE        FALSE    FALSE</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10          FALSE        FALSE    FALSE</span></span></code></pre></div>
+<p>The p-values are easier to read as a grid, with selected variables as
+rows and screened variables as columns:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">p_value_grid</span>(a<span class="sc">$</span>table)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        added</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; dropped    21    81   112   115   125   128   253   275   279   297</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     5   0.228 0.069 0.633 0.957 0.443 0.752 0.241 0.794 0.530 0.807</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     101 0.257 0.084 0.554 0.983 0.408 0.694 0.245 0.854 0.582 0.715</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     106 0.271 0.075 0.625 0.954 0.402 0.693 0.205 0.799 0.613 0.687</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     156 0.196 0.077 0.402 0.989 0.239 0.917 0.232 0.996 0.757 0.792</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     177 0.282 0.086 0.587 0.963 0.424 0.690 0.228 0.852 0.545 0.775</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     204 0.270 0.094 0.555 0.940 0.459 0.730 0.243 0.829 0.544 0.854</span></span></code></pre></div>
+<p>A small p-value in row <span class="math inline">\(s\)</span>, column
+<span class="math inline">\(j\)</span> means that <span class="math inline">\(x_j\)</span> still carries signal once <span class="math inline">\(x_s\)</span> is removed from the model. When <span class="math inline">\(x_j\)</span> is a surrogate for <span class="math inline">\(x_s\)</span> these p-values are small in row <span class="math inline">\(s\)</span> and large in the other rows. A screened
+variable whose p-value is small in every row is a candidate for a missed
+signal in its own right. With independent features, most columns of the
+grid change little from row to row: dropping one selected variable
+barely changes the coefficient of <span class="math inline">\(x_j\)</span>.</p>
+<div id="does-screening-matter" class="section level3">
+<h3>Does screening matter?</h3>
+<p>The three sets of p-values for the same pairs:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">compare_p_values</span>(a), <span class="dv">10</span>)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    dropped added   screened lasso_only       naive</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1        5    21 0.22803446 0.03815790 0.080569181</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2        5   275 0.79441827 0.17969244 0.081567092</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3        5   112 0.63349694 0.67069736 0.109449713</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4        5   128 0.75206212 0.27618682 0.297729262</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5        5   115 0.95714797 0.92335662 0.070987779</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6        5   297 0.80744458 0.48408157 0.146473635</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 7        5   253 0.24067268 0.31500545 0.335946581</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 8        5    81 0.06925875 0.01586708 0.008913217</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 9        5   279 0.52974231 0.25314737 0.323291883</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10       5   125 0.44259914 0.01013596 0.019839301</span></span></code></pre></div>
+<p>Over 50 replications:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="do">## results_indep &lt;- simulate(rho = 0, amp = 3, nsim = 50)</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">coverage_table</span>(results_indep)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             coverage median_length</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; lasso only 0.8254215     0.7040169</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; naive      0.8430610     0.3528058</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; screened   0.9118029     0.7812204</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="fu">with</span>(results_indep, <span class="fu">tapply</span>(reject, <span class="fu">list</span>(method, <span class="at">added_signal =</span> added_signal), mean))</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             added_signal</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                  FALSE      TRUE</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   lasso only 0.2642934 0.4758395</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   naive      0.3404223 0.5192465</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   screened   0.1197411 0.2588043</span></span></code></pre></div>
+<p>Only the intervals that condition on the screening step come close to
+the nominal 90% coverage. When the added variable is null, the screened
+tests reject at about the nominal 10%, and the LASSO-only and naive
+tests reject far more often. With independent features, <span class="math inline">\(M_{js} \approx 0\)</span> in the decomposition
+above, so <span class="math inline">\(\hat{\theta}_{s,j}\)</span> is
+nearly the screened coefficient <span class="math inline">\(\hat{\beta}_{j \cdot G}\)</span>. That coefficient
+is large partly because <span class="math inline">\(x_j\)</span> was
+chosen for its large gradient, which is the selection effect that
+screening accounts for.</p>
+</div>
+</div>
+<div id="example-2-correlated-features-and-surrogates" class="section level2">
+<h2>Example 2: correlated features and surrogates</h2>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">0</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> <span class="fu">make_data</span>(<span class="at">rho =</span> <span class="fl">0.8</span>, <span class="at">amp =</span> <span class="dv">5</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>a <span class="ot">&lt;-</span> <span class="fu">analyze</span>(d)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 23 active variables, 6 of them true signals; 9 true signals were left out</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; screened: 218 140 56 221 234 1 200 247 212 163</span></span></code></pre></div>
+<p>The interesting pairs are a selected null variable next to a screened
+true signal: the LASSO chose <span class="math inline">\(x_s\)</span> in
+place of the nearby <span class="math inline">\(x_j\)</span>. Here are
+the pairs at distance at most 2:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>a<span class="sc">$</span>table[a<span class="sc">$</span>table<span class="sc">$</span>adjacent, ]</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     dropped added    estimate  lower_conf upper_conf   p_value       truth</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6         2     1 -0.37062986 -0.87642351  0.1507497 0.2451725 -0.47395340</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 53       54    56  0.36505323 -0.30923182  0.5594844 0.6343925  0.21236075</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 140     162   163  0.31238042 -0.08791716  0.6732315 0.2056827  0.27405821</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 151     219   218 -0.03023869 -0.30447892  0.6507284 0.5513200  0.03261443</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 154     219   221 -0.18554004 -0.78502289  0.8737316 0.9299056 -0.52199381</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 161     220   218  0.06259443 -0.27492338  1.0324281 0.3406162  0.16942370</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 164     220   221 -0.33518421 -0.95304053  0.2035123 0.2864314 -0.46233925</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     dropped_signal added_signal adjacent</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6            FALSE         TRUE     TRUE</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 53           FALSE        FALSE     TRUE</span></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 140          FALSE        FALSE     TRUE</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 151          FALSE        FALSE     TRUE</span></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 154          FALSE         TRUE     TRUE</span></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 161          FALSE        FALSE     TRUE</span></span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 164          FALSE         TRUE     TRUE</span></span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">p_value_grid</span>(a<span class="sc">$</span>table)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        added</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; dropped     1    56   140   163   200   212   218   221   234   247</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     2   0.245 0.811 0.160 0.129 0.016 0.137 0.515 0.838 0.598 0.840</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     6   0.573 0.461 0.162 0.168 0.023 0.179 0.634 0.993 0.860 0.545</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     20  0.866 0.426 0.230 0.178 0.042 0.127 0.486 0.940 0.715 0.647</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     22  0.626 0.543 0.184 0.155 0.026 0.150 0.519 0.872 0.715 0.635</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     41  0.492 0.757 0.195 0.158 0.022 0.139 0.424 0.832 0.604 0.788</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     54  0.601 0.634 0.179 0.159 0.031 0.140 0.542 0.851 0.717 0.611</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     60  0.575 0.347 0.248 0.163 0.027 0.119 0.521 0.846 0.693 0.585</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     81  0.643 0.447 0.149 0.129 0.031 0.126 0.542 0.668 0.745 0.595</span></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     101 0.680 0.461 0.199 0.155 0.025 0.139 0.498 0.809 0.774 0.613</span></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     111 0.611 0.527 0.187 0.164 0.027 0.159 0.524 0.886 0.748 0.662</span></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     121 0.611 0.525 0.189 0.163 0.031 0.148 0.523 0.886 0.740 0.648</span></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     136 0.725 0.329 0.370 0.127 0.021 0.149 0.640 0.847 0.827 0.548</span></span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     152 0.620 0.455 0.152 0.137 0.030 0.122 0.576 0.726 0.686 0.695</span></span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     162 0.836 0.783 0.205 0.206 0.050 0.160 0.417 0.838 0.823 0.610</span></span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     184 0.592 0.517 0.182 0.168 0.026 0.148 0.530 0.868 0.734 0.634</span></span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     219 0.630 0.518 0.215 0.160 0.025 0.135 0.551 0.930 0.755 0.575</span></span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     220 0.530 0.528 0.203 0.163 0.022 0.097 0.341 0.286 0.732 0.449</span></span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     224 0.619 0.466 0.185 0.183 0.028 0.157 0.537 0.933 0.714 0.622</span></span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     241 0.732 0.425 0.129 0.130 0.024 0.209 0.762 0.861 0.995 0.830</span></span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     261 0.905 0.400 0.321 0.126 0.032 0.083 0.529 0.793 0.620 0.704</span></span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     263 0.663 0.426 0.273 0.100 0.025 0.089 0.561 0.729 0.899 0.675</span></span>
+<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     276 0.540 0.746 0.209 0.119 0.019 0.151 0.497 0.939 0.450 0.804</span></span>
+<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     277 0.619 0.457 0.224 0.186 0.026 0.130 0.543 0.911 0.878 0.618</span></span></code></pre></div>
+<p>For each surrogate pair (a selected null <span class="math inline">\(s\)</span> next to a screened signal <span class="math inline">\(j\)</span>), we compare the p-value in row <span class="math inline">\(s\)</span> with the median of column <span class="math inline">\(j\)</span> over the other rows:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>surrogate_pairs <span class="ot">&lt;-</span> a<span class="sc">$</span>table[a<span class="sc">$</span>table<span class="sc">$</span>adjacent <span class="sc">&amp;</span> <span class="sc">!</span>a<span class="sc">$</span>table<span class="sc">$</span>dropped_signal <span class="sc">&amp;</span> a<span class="sc">$</span>table<span class="sc">$</span>added_signal, ]</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>surrogate_pairs<span class="sc">$</span>median_other_rows <span class="ot">&lt;-</span> <span class="fu">sapply</span>(<span class="fu">seq_len</span>(<span class="fu">nrow</span>(surrogate_pairs)), <span class="cf">function</span>(i) {</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  col <span class="ot">&lt;-</span> a<span class="sc">$</span>table[a<span class="sc">$</span>table<span class="sc">$</span>added <span class="sc">==</span> surrogate_pairs<span class="sc">$</span>added[i], ]</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">median</span>(col<span class="sc">$</span>p_value[col<span class="sc">$</span>dropped <span class="sc">!=</span> surrogate_pairs<span class="sc">$</span>dropped[i]])</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>surrogate_pairs[, <span class="fu">c</span>(<span class="st">&quot;dropped&quot;</span>, <span class="st">&quot;added&quot;</span>, <span class="st">&quot;p_value&quot;</span>, <span class="st">&quot;median_other_rows&quot;</span>)]</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     dropped added   p_value median_other_rows</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6         2     1 0.2451725         0.6197503</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 154     219   221 0.9299056         0.8492854</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 164     220   221 0.2864314         0.8562716</span></span></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">compare_p_values</span>(a), <span class="dv">10</span>)</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    dropped added   screened lasso_only       naive</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1        2   218 0.51503535 0.55553556 0.933722950</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2        2   140 0.16023117 0.06766424 0.022893000</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3        2    56 0.81132276 0.85092786 0.580623487</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4        2   221 0.83836968 0.83836968 0.435969343</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5        2   234 0.59793153 0.10615870 0.056253583</span></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6        2     1 0.24517247 0.24517247 0.009117723</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 7        2   200 0.01610315 0.01610315 0.011164592</span></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 8        2   247 0.83986640 0.35082434 0.876464877</span></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 9        2   212 0.13744425 0.13744425 0.001671224</span></span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10       2   163 0.12894095 0.12894095 0.454179662</span></span></code></pre></div>
+<p>Over 30 replications:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="do">## results_ar &lt;- simulate(rho = 0.8, amp = 5, nsim = 30)</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="fu">coverage_table</span>(results_ar)</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             coverage median_length</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; lasso only 0.8734312     1.0879803</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; naive      0.9221629     0.5403365</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; screened   0.8943925     1.1807819</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="fu">with</span>(results_ar, <span class="fu">tapply</span>(reject, <span class="fu">list</span>(method, <span class="at">dropped_signal =</span> dropped_signal,</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">added_signal =</span> added_signal), mean))</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; , , added_signal = FALSE</span></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             dropped_signal</span></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                  FALSE      TRUE</span></span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   lasso only 0.2162162 0.2241888</span></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   naive      0.1592664 0.1723557</span></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   screened   0.1452703 0.1508639</span></span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; , , added_signal = TRUE</span></span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             dropped_signal</span></span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                  FALSE      TRUE</span></span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   lasso only 0.3459119 0.3175074</span></span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   naive      0.3411950 0.3175074</span></span>
+<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   screened   0.2877358 0.2700297</span></span></code></pre></div>
+<p>When the added variable is null, the target <span class="math inline">\(\beta_{j \cdot F}\)</span> is not exactly zero. If
+<span class="math inline">\(x_j\)</span> is correlated with the dropped
+<span class="math inline">\(x_s\)</span> and <span class="math inline">\(x_s\)</span> carries signal, the coefficient of
+<span class="math inline">\(x_j\)</span> absorbs part of that signal.
+The table below restricts to the surrogate pairs, where a selected null
+sits next to a screened signal:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>surrogate <span class="ot">&lt;-</span> <span class="fu">subset</span>(results_ar, adjacent <span class="sc">&amp;</span> <span class="sc">!</span>dropped_signal <span class="sc">&amp;</span> added_signal)</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">data.frame</span>(<span class="at">pairs =</span> <span class="fu">tapply</span>(surrogate<span class="sc">$</span>reject, surrogate<span class="sc">$</span>method, length),</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>           <span class="at">coverage =</span> <span class="fu">tapply</span>(surrogate<span class="sc">$</span>cover, surrogate<span class="sc">$</span>method, mean),</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>           <span class="at">reject =</span> <span class="fu">tapply</span>(surrogate<span class="sc">$</span>reject, surrogate<span class="sc">$</span>method, mean))</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;            pairs  coverage    reject</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; lasso only    29 0.8965517 0.3448276</span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; naive         29 0.8275862 0.7241379</span></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; screened      29 0.8965517 0.2758621</span></span></code></pre></div>
+<p>Conditioning on screening can be changed through
+<code>ScreenedSelection</code>, for example
+<code>ScreenedSelection$new(li, top_k = 10, conditioning = &quot;exact&quot;)</code>
+or a <code>threshold</code>. The swap contrasts do not depend on that
+choice.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

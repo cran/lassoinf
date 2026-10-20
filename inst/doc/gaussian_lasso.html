@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Randomized LASSO for a Gaussian linear model</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Randomized LASSO for a Gaussian linear
+model</h1>
+
+
+
+<p>This vignette shows the basic workflow of <code>lassoinf</code>. We
+fit a LASSO to a randomized response, then use
+<code>LassoInference</code> for confidence intervals and p-values for
+the selected coefficients that are valid after selection.</p>
+<div id="randomization-and-the-proportion-used-for-selection" class="section level2">
+<h2>Randomization and the proportion used for selection</h2>
+<p>In data splitting, a proportion <span class="math inline">\(\pi\)</span> of the data is used to select the
+model and the rest for inference. For the score <span class="math inline">\(Z = X&#39;y\)</span>, with variance <span class="math inline">\(\Sigma = \sigma^2 X&#39;X\)</span>, the score of a
+<span class="math inline">\(\pi\)</span> fraction of the data has
+variance <span class="math inline">\(\Sigma / \pi\)</span>.</p>
+<p>Randomization instead selects with <span class="math inline">\(Z_{noisy} = Z + \omega\)</span>, <span class="math inline">\(\omega \sim N(0, \Omega)\)</span>. Matching <span class="math inline">\(\text{Var}(Z_{noisy}) = \Sigma + \Omega = \Sigma /
+\pi\)</span> gives</p>
+<p><span class="math display">\[
+\Omega = \frac{1 - \pi}{\pi} \Sigma.
+\]</span></p>
+<p>For least squares, this is the same as fitting the LASSO to <span class="math inline">\(y_{noisy} = y + \epsilon\)</span> with <span class="math inline">\(\epsilon \sim N(0, \frac{1-\pi}{\pi}\sigma^2
+I)\)</span>. As <span class="math inline">\(\pi \to 1\)</span> almost
+all the information is used for selection and little is left for
+inference. Smaller <span class="math inline">\(\pi\)</span> leaves
+more.</p>
+</div>
+<div id="data" class="section level2">
+<h2>Data</h2>
+<p>We use <span class="math inline">\(n = 100\)</span> and <span class="math inline">\(p = 20\)</span>, with one strong effect, two
+weaker ones and <span class="math inline">\(\sigma^2 = 2\)</span>.
+Selection uses <span class="math inline">\(\pi = 0.9\)</span>.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lassoinf)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">0</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">100</span>; p <span class="ot">&lt;-</span> <span class="dv">20</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>signal_strength <span class="ot">&lt;-</span> <span class="dv">4</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>X <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(n <span class="sc">*</span> p), n, p)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>beta <span class="ot">&lt;-</span> <span class="fu">numeric</span>(p)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>beta[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>] <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">1</span>, <span class="sc">-</span><span class="dv">1</span>) <span class="sc">*</span> signal_strength <span class="sc">/</span> <span class="fu">sqrt</span>(n)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>sigma2 <span class="ot">&lt;-</span> <span class="dv">2</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">drop</span>(X <span class="sc">%*%</span> beta) <span class="sc">+</span> <span class="fu">rnorm</span>(n, <span class="at">sd =</span> <span class="fu">sqrt</span>(sigma2))</span></code></pre></div>
+<p>With <span class="math inline">\(n &gt; p\)</span> we estimate <span class="math inline">\(\sigma^2\)</span> from the full least squares fit,
+and build <span class="math inline">\(\Sigma\)</span> and <span class="math inline">\(\Omega\)</span>:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>pi_selection <span class="ot">&lt;-</span> <span class="fl">0.9</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>Q <span class="ot">&lt;-</span> <span class="fu">crossprod</span>(X)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>Z_full <span class="ot">&lt;-</span> <span class="fu">drop</span>(<span class="fu">crossprod</span>(X, y))</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>sigma2_hat <span class="ot">&lt;-</span> <span class="fu">sum</span>(<span class="fu">lm.fit</span>(X, y)<span class="sc">$</span>residuals<span class="sc">^</span><span class="dv">2</span>) <span class="sc">/</span> (n <span class="sc">-</span> p)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>Sigma <span class="ot">&lt;-</span> sigma2_hat <span class="sc">*</span> Q</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>sigma2_rand <span class="ot">&lt;-</span> (<span class="dv">1</span> <span class="sc">-</span> pi_selection) <span class="sc">/</span> pi_selection <span class="sc">*</span> sigma2_hat</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>Sigma_noise <span class="ot">&lt;-</span> sigma2_rand <span class="sc">*</span> Q</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>y_noisy <span class="ot">&lt;-</span> y <span class="sc">+</span> <span class="fu">rnorm</span>(n, <span class="at">sd =</span> <span class="fu">sqrt</span>(sigma2_rand))</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="fu">c</span>(<span class="at">sigma2_hat =</span> sigma2_hat, <span class="at">sigma2_rand =</span> sigma2_rand)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  sigma2_hat sigma2_rand </span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   2.1757329   0.2417481</span></span></code></pre></div>
+</div>
+<div id="fit-the-lasso-on-the-randomized-response" class="section level2">
+<h2>Fit the LASSO on the randomized response</h2>
+<p>We fit the LASSO <span class="math inline">\(\frac{1}{2}\|y_{noisy} -
+Xb\|^2 + \lambda \|b\|_1\)</span>. glmnet scales the loss by <span class="math inline">\(1/n\)</span>, so we pass it <span class="math inline">\(\lambda / n\)</span>. <code>LassoInference</code>
+needs the solution, the gradient of the smooth part at it, <span class="math inline">\(G = X&#39;(X\hat{\beta} - y_{noisy})\)</span>, and
+its Hessian, <span class="math inline">\(Q = X&#39;X\)</span>.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>lam <span class="ot">&lt;-</span> <span class="dv">2</span> <span class="sc">*</span> <span class="fu">sqrt</span>(n)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> glmnet<span class="sc">::</span><span class="fu">glmnet</span>(X, y_noisy, <span class="at">lambda =</span> lam <span class="sc">/</span> n, <span class="at">intercept =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>                      <span class="at">standardize =</span> <span class="cn">FALSE</span>, <span class="at">control =</span> <span class="fu">list</span>(<span class="at">thresh =</span> <span class="fl">1e-14</span>))</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>beta_hat <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(<span class="fu">coef</span>(fit))[<span class="sc">-</span><span class="dv">1</span>]</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>G_hat <span class="ot">&lt;-</span> <span class="fu">drop</span>(<span class="fu">crossprod</span>(X, X <span class="sc">%*%</span> beta_hat <span class="sc">-</span> y_noisy))</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="fu">which</span>(beta_hat <span class="sc">!=</span> <span class="dv">0</span>)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1]  1  3 10 13 14</span></span></code></pre></div>
+</div>
+<div id="inference" class="section level2">
+<h2>Inference</h2>
+<p>The arguments are the solution, gradient and Hessian, the penalty
+weights <span class="math inline">\(D\)</span>, the bounds <span class="math inline">\(L\)</span>, <span class="math inline">\(U\)</span>
+(none here), the full-data score and its covariance, and the
+randomization covariance.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>li <span class="ot">&lt;-</span> LassoInference<span class="sc">$</span><span class="fu">new</span>(beta_hat, G_hat, Q, <span class="fu">rep</span>(lam, p), <span class="cn">NULL</span>, <span class="cn">NULL</span>,</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>                         Z_full, Sigma, Sigma_noise, <span class="at">level =</span> <span class="fl">0.9</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>summ <span class="ot">&lt;-</span> li<span class="sc">$</span><span class="fu">summary</span>()</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>summ</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    index    beta_hat  lower_conf  upper_conf      p_value</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0      0  0.41432718  0.50799234  1.08675205 7.329526e-05</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2      2 -0.03783531 -0.57080194  0.04672353 1.456693e-01</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 9      9 -0.16256389 -0.65087642 -0.01061865 9.066102e-02</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 12    12 -0.02702932 -0.02090107  1.03813586 1.129303e-01</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 13    13  0.13122199 -0.49668608  0.46893379 8.089657e-01</span></span></code></pre></div>
+<p><code>index</code> is 0-based. <code>beta_hat</code> is the LASSO
+solution, which is shrunk toward zero and can lie outside its interval.
+The intervals are for the coefficients of the selected model, <span class="math inline">\(\beta_E = (X_E&#39;X_E)^{-1} X_E&#39; \mu\)</span>
+with <span class="math inline">\(\mu = E[y]\)</span>. They come from the
+contrasts in <code>li$contrasts</code>, so we can compute the targets
+and check coverage:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>Z_mu <span class="ot">&lt;-</span> <span class="fu">drop</span>(Q <span class="sc">%*%</span> beta)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>summ<span class="sc">$</span>truth <span class="ot">&lt;-</span> <span class="fu">sapply</span>(<span class="fu">as.character</span>(summ<span class="sc">$</span>index), <span class="cf">function</span>(j) <span class="fu">sum</span>(li<span class="sc">$</span>contrasts[[j]] <span class="sc">*</span> Z_mu))</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>summ<span class="sc">$</span>cover <span class="ot">&lt;-</span> summ<span class="sc">$</span>lower_conf <span class="sc">&lt;=</span> summ<span class="sc">$</span>truth <span class="sc">&amp;</span> summ<span class="sc">$</span>truth <span class="sc">&lt;=</span> summ<span class="sc">$</span>upper_conf</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>summ</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    index    beta_hat  lower_conf  upper_conf      p_value        truth cover</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0      0  0.41432718  0.50799234  1.08675205 7.329526e-05  0.855889010  TRUE</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2      2 -0.03783531 -0.57080194  0.04672353 1.456693e-01 -0.406730210  TRUE</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 9      9 -0.16256389 -0.65087642 -0.01061865 9.066102e-02  0.009152833 FALSE</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 12    12 -0.02702932 -0.02090107  1.03813586 1.129303e-01  0.006070596  TRUE</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 13    13  0.13122199 -0.49668608  0.46893379 8.089657e-01 -0.040488544  TRUE</span></span></code></pre></div>
+<p><code>summary()</code> also stores naive intervals, which ignore
+selection, and data-splitting intervals in <code>li$&quot;_naive&quot;</code> and
+<code>li$&quot;_splitting&quot;</code>:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>li<span class="sc">$</span><span class="st">`</span><span class="at">_naive</span><span class="st">`</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    index   beta_hat  lower_conf  upper_conf      p_value</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0      0  0.8038264  0.52088364  1.08676909 2.969066e-06</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2      2 -0.3414098 -0.57683903 -0.10598055 1.706525e-02</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 9      9 -0.3485781 -0.57251641 -0.12463971 1.045677e-02</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 12    12 -0.1524278 -0.39815843  0.09330274 3.075812e-01</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 13    13  0.2684742  0.01106352  0.52588484 8.624453e-02</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>li<span class="sc">$</span><span class="st">`</span><span class="at">_splitting</span><span class="st">`</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    index   beta_hat lower_conf upper_conf     p_value</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0      0  1.4619576  0.5672141  2.3567010 0.007196907</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2      2 -1.4585552 -2.2030478 -0.7140625 0.001270877</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 9      9 -0.4672224 -1.1753776  0.2409328 0.277819090</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 12    12  0.6308092 -0.1462591  1.4078776 0.181791012</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 13    13 -0.3747552 -1.1887592  0.4392488 0.448890562</span></span></code></pre></div>
+</div>
+<div id="coverage-over-repeated-experiments" class="section level2">
+<h2>Coverage over repeated experiments</h2>
+<p>The randomized intervals should cover their targets 90% of the time.
+The naive intervals should not.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>one_replication <span class="ot">&lt;-</span> <span class="cf">function</span>() {</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  X <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(n <span class="sc">*</span> p), n, p)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  y <span class="ot">&lt;-</span> <span class="fu">drop</span>(X <span class="sc">%*%</span> beta) <span class="sc">+</span> <span class="fu">rnorm</span>(n, <span class="at">sd =</span> <span class="fu">sqrt</span>(sigma2))</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  Q <span class="ot">&lt;-</span> <span class="fu">crossprod</span>(X)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  sigma2_hat <span class="ot">&lt;-</span> <span class="fu">sum</span>(<span class="fu">lm.fit</span>(X, y)<span class="sc">$</span>residuals<span class="sc">^</span><span class="dv">2</span>) <span class="sc">/</span> (n <span class="sc">-</span> p)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  sigma2_rand <span class="ot">&lt;-</span> (<span class="dv">1</span> <span class="sc">-</span> pi_selection) <span class="sc">/</span> pi_selection <span class="sc">*</span> sigma2_hat</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  y_noisy <span class="ot">&lt;-</span> y <span class="sc">+</span> <span class="fu">rnorm</span>(n, <span class="at">sd =</span> <span class="fu">sqrt</span>(sigma2_rand))</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  fit <span class="ot">&lt;-</span> glmnet<span class="sc">::</span><span class="fu">glmnet</span>(X, y_noisy, <span class="at">lambda =</span> lam <span class="sc">/</span> n, <span class="at">intercept =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>                        <span class="at">standardize =</span> <span class="cn">FALSE</span>, <span class="at">control =</span> <span class="fu">list</span>(<span class="at">thresh =</span> <span class="fl">1e-14</span>))</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>  beta_hat <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(<span class="fu">coef</span>(fit))[<span class="sc">-</span><span class="dv">1</span>]</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">all</span>(beta_hat <span class="sc">==</span> <span class="dv">0</span>)) <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>  G_hat <span class="ot">&lt;-</span> <span class="fu">drop</span>(<span class="fu">crossprod</span>(X, X <span class="sc">%*%</span> beta_hat <span class="sc">-</span> y_noisy))</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>  li <span class="ot">&lt;-</span> LassoInference<span class="sc">$</span><span class="fu">new</span>(beta_hat, G_hat, Q, <span class="fu">rep</span>(lam, p), <span class="cn">NULL</span>, <span class="cn">NULL</span>,</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">drop</span>(<span class="fu">crossprod</span>(X, y)), sigma2_hat <span class="sc">*</span> Q, sigma2_rand <span class="sc">*</span> Q, <span class="at">level =</span> <span class="fl">0.9</span>)</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>  summ <span class="ot">&lt;-</span> li<span class="sc">$</span><span class="fu">summary</span>()</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>  truth <span class="ot">&lt;-</span> <span class="fu">sapply</span>(<span class="fu">as.character</span>(summ<span class="sc">$</span>index), <span class="cf">function</span>(j) <span class="fu">sum</span>(li<span class="sc">$</span>contrasts[[j]] <span class="sc">*</span> <span class="fu">drop</span>(Q <span class="sc">%*%</span> beta)))</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>  covers <span class="ot">&lt;-</span> <span class="cf">function</span>(df) df<span class="sc">$</span>lower_conf <span class="sc">&lt;=</span> truth <span class="sc">&amp;</span> truth <span class="sc">&lt;=</span> df<span class="sc">$</span>upper_conf</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">method =</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="st">&quot;randomized&quot;</span>, <span class="st">&quot;naive&quot;</span>, <span class="st">&quot;splitting&quot;</span>), <span class="at">each =</span> <span class="fu">nrow</span>(summ)),</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>             <span class="at">cover =</span> <span class="fu">c</span>(<span class="fu">covers</span>(summ), <span class="fu">covers</span>(li<span class="sc">$</span><span class="st">`</span><span class="at">_naive</span><span class="st">`</span>), <span class="fu">covers</span>(li<span class="sc">$</span><span class="st">`</span><span class="at">_splitting</span><span class="st">`</span>)),</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>             <span class="at">length =</span> <span class="fu">c</span>(summ<span class="sc">$</span>upper_conf <span class="sc">-</span> summ<span class="sc">$</span>lower_conf,</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>                        li<span class="sc">$</span><span class="st">`</span><span class="at">_naive</span><span class="st">`</span><span class="sc">$</span>upper_conf <span class="sc">-</span> li<span class="sc">$</span><span class="st">`</span><span class="at">_naive</span><span class="st">`</span><span class="sc">$</span>lower_conf,</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>                        li<span class="sc">$</span><span class="st">`</span><span class="at">_splitting</span><span class="st">`</span><span class="sc">$</span>upper_conf <span class="sc">-</span> li<span class="sc">$</span><span class="st">`</span><span class="at">_splitting</span><span class="st">`</span><span class="sc">$</span>lower_conf))</span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">replicate</span>(<span class="dv">200</span>, <span class="fu">one_replication</span>(), <span class="at">simplify =</span> <span class="cn">FALSE</span>))</span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a><span class="fu">data.frame</span>(<span class="at">coverage =</span> <span class="fu">tapply</span>(results<span class="sc">$</span>cover, results<span class="sc">$</span>method, mean),</span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>           <span class="at">median_length =</span> <span class="fu">tapply</span>(results<span class="sc">$</span>length, results<span class="sc">$</span>method, median))</span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             coverage median_length</span></span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; naive      0.7381166     0.4782847</span></span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; randomized 0.8914798     0.8712314</span></span>
+<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; splitting  0.9013453     1.5124690</span></span></code></pre></div>
+<p>The randomized intervals use the information that selection left
+over, so they are typically shorter than data splitting while keeping
+the nominal coverage.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

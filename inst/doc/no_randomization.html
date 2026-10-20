@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Inference after a glmnet fit without randomization</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Inference after a glmnet fit without
+randomization</h1>
+
+
+
+<p>The simplest use of <code>lassoinf</code> takes a standard
+<code>glmnet</code> fit on all the data, at a given <span class="math inline">\(\lambda\)</span>, and gives intervals and p-values
+for the selected coefficients that account for the selection. Nothing is
+held out and no noise is added. This is the polyhedral approach of Lee
+et al. (2016), here with the linearization of a GLM used throughout the
+package. <code>glmnet_inference</code> does it in one call; we also show
+what it computes.</p>
+<div id="setup" class="section level2">
+<h2>Setup</h2>
+<p>glmnet divides the loss by the number of observations <span class="math inline">\(n\)</span>. <code>glmnet_problem_from_fit</code>
+returns the LASSO solution <span class="math inline">\(\hat{\beta}\)</span>, the gradient <span class="math inline">\(G\)</span> of the smooth part at <span class="math inline">\(\hat{\beta}\)</span>, and the Hessian <span class="math inline">\(\hat{Q}\)</span>, all in the original coordinates
+<span class="math inline">\((\text{intercept}, \beta)\)</span>.
+Linearizing the KKT conditions, the selection is a function of the
+score</p>
+<p><span class="math display">\[
+Z = -G + \hat{Q}\hat{\beta},
+\]</span></p>
+<p>a one-step estimator, <span class="math inline">\(\hat{Q}\)</span>
+times an approximation to the unpenalized MLE. With <span class="math inline">\(I\)</span> the per-observation Fisher information,
+<span class="math inline">\(\text{Var}(Z) \approx I / n\)</span>. We
+take <span class="math inline">\(\Sigma = \hat{Q} / n\)</span>. By
+default <code>glmnet_problem_from_fit</code> evaluates <span class="math inline">\(\hat{Q}\)</span> at the <em>relaxed</em> fit: one
+Newton step for the unpenalized loss on the intercept and the selected
+variables <span class="math inline">\(E\)</span> from the LASSO
+solution, <span class="math inline">\(\tilde{\beta}_E = \hat{\beta}_E -
+H_{E,E}^{-1} \nabla \ell(\hat{\beta})_E\)</span>, with <span class="math inline">\(H\)</span> the Hessian at <span class="math inline">\(\hat{\beta}\)</span>. At the LASSO solution <span class="math inline">\(\nabla \ell(\hat{\beta})_E = -D_E \,
+\text{sign}(\hat{\beta}_E)\)</span>, so the step undoes the shrinkage of
+<span class="math inline">\(\hat{\beta}\)</span> toward zero, which
+makes the information at <span class="math inline">\(\hat{\beta}\)</span> overstate <span class="math inline">\(I\)</span>. Pass
+<code>information = &quot;lasso&quot;</code> to use <span class="math inline">\(\hat{Q} = H\)</span>.</p>
+<p>There is no randomization: the score used for selection is <span class="math inline">\(Z\)</span> itself, which is
+<code>scalar_noise = 0</code>.</p>
+</div>
+<div id="data-and-fit" class="section level2">
+<h2>Data and fit</h2>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lassoinf)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">0</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">600</span>; p <span class="ot">&lt;-</span> <span class="dv">30</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>beta <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.6</span>, <span class="sc">-</span><span class="fl">0.6</span>, <span class="fl">0.4</span>, <span class="fu">rep</span>(<span class="dv">0</span>, p <span class="sc">-</span> <span class="dv">3</span>))</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>make_data <span class="ot">&lt;-</span> <span class="cf">function</span>(n) {</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  X <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(n <span class="sc">*</span> p), n, p)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  y <span class="ot">&lt;-</span> <span class="fu">rbinom</span>(n, <span class="dv">1</span>, <span class="fu">plogis</span>(<span class="fu">drop</span>(X <span class="sc">%*%</span> beta)))</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">X =</span> X, <span class="at">y =</span> y)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> <span class="fu">make_data</span>(n)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>lam <span class="ot">&lt;-</span> <span class="fl">0.03</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>lambda_path <span class="ot">&lt;-</span> lam <span class="sc">*</span> <span class="fu">exp</span>(<span class="fu">seq</span>(<span class="fu">log</span>(<span class="dv">10</span>), <span class="dv">0</span>, <span class="at">length.out =</span> <span class="dv">30</span>))</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> glmnet<span class="sc">::</span><span class="fu">glmnet</span>(d<span class="sc">$</span>X, d<span class="sc">$</span>y, <span class="at">family =</span> <span class="st">&quot;binomial&quot;</span>, <span class="at">lambda =</span> lambda_path, <span class="at">control =</span> <span class="fu">list</span>(<span class="at">thresh =</span> <span class="fl">1e-14</span>))</span></code></pre></div>
+<p>We fit a path ending at <span class="math inline">\(\lambda\)</span>
+with a small <code>thresh</code>: <code>glmnet_problem_from_fit</code>
+warns if the fit does not satisfy the KKT conditions closely enough.</p>
+</div>
+<div id="inference" class="section level2">
+<h2>Inference</h2>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>li <span class="ot">&lt;-</span> <span class="fu">glmnet_inference</span>(fit, d<span class="sc">$</span>X, d<span class="sc">$</span>y, <span class="at">s =</span> lam, <span class="at">level =</span> <span class="fl">0.9</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>summ <span class="ot">&lt;-</span> li<span class="sc">$</span><span class="fu">summary</span>()</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>summ<span class="sc">$</span>variable <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(summ<span class="sc">$</span>index <span class="sc">==</span> <span class="dv">0</span>, <span class="st">&quot;(Intercept)&quot;</span>, <span class="fu">paste0</span>(<span class="st">&quot;x&quot;</span>, summ<span class="sc">$</span>index))</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>summ</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    index    beta_hat lower_conf upper_conf      p_value    variable</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0      0 -0.04390486 -0.1926541  0.5088327 8.227524e-01 (Intercept)</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1      1  0.60206784  0.7002772  1.0398212 7.327472e-15          x1</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2      2 -0.37446602 -0.7584731 -0.4454181 2.797866e-08          x2</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3      3  0.23466365  0.2731540  0.5905153 1.765597e-04          x3</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 7      7  0.01072090 -0.5636646  0.2200132 4.570290e-01          x7</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 21    21 -0.16211621 -0.5225519 -0.1506638 1.047598e-02         x21</span></span></code></pre></div>
+<p>Index 0 is the intercept. The estimate for the selected model <span class="math inline">\(E\)</span> is <span class="math inline">\(W
+Z_E\)</span> with <span class="math inline">\(W =
+\hat{Q}_{E,E}^{-1}\)</span>, and its target is <span class="math inline">\(W (\hat{Q}\beta^*)_E\)</span>, with <span class="math inline">\(\beta^* = (0, \beta)\)</span>. When <span class="math inline">\(E\)</span> contains all the true signals, this is
+<span class="math inline">\(\beta^*_E\)</span>.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>target <span class="ot">&lt;-</span> <span class="cf">function</span>(li) <span class="fu">drop</span>(li<span class="sc">$</span>W <span class="sc">%*%</span> (li<span class="sc">$</span>Q_hat <span class="sc">%*%</span> <span class="fu">c</span>(<span class="dv">0</span>, beta))[li<span class="sc">$</span>E <span class="sc">+</span> <span class="dv">1</span>])</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>summ<span class="sc">$</span>truth <span class="ot">&lt;-</span> <span class="fu">target</span>(li)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>summ<span class="sc">$</span>cover <span class="ot">&lt;-</span> summ<span class="sc">$</span>lower_conf <span class="sc">&lt;=</span> summ<span class="sc">$</span>truth <span class="sc">&amp;</span> summ<span class="sc">$</span>truth <span class="sc">&lt;=</span> summ<span class="sc">$</span>upper_conf</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>summ[, <span class="fu">c</span>(<span class="st">&quot;variable&quot;</span>, <span class="st">&quot;lower_conf&quot;</span>, <span class="st">&quot;upper_conf&quot;</span>, <span class="st">&quot;p_value&quot;</span>, <span class="st">&quot;truth&quot;</span>, <span class="st">&quot;cover&quot;</span>)]</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       variable lower_conf upper_conf      p_value         truth cover</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0  (Intercept) -0.1926541  0.5088327 8.227524e-01 -3.870803e-18  TRUE</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1           x1  0.7002772  1.0398212 7.327472e-15  6.000000e-01 FALSE</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2           x2 -0.7584731 -0.4454181 2.797866e-08 -6.000000e-01  TRUE</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3           x3  0.2731540  0.5905153 1.765597e-04  4.000000e-01  TRUE</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 7           x7 -0.5636646  0.2200132 4.570290e-01  3.330745e-18  TRUE</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 21         x21 -0.5225519 -0.1506638 1.047598e-02  7.648649e-18 FALSE</span></span></code></pre></div>
+<p>For comparison, <code>li$&quot;_naive&quot;</code> holds Wald intervals that
+ignore selection:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>li<span class="sc">$</span><span class="st">`</span><span class="at">_naive</span><span class="st">`</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    index    beta_hat  lower_conf  upper_conf      p_value</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0      0 -0.06214006 -0.21203798  0.08775786 4.953194e-01</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1      1  0.87004951  0.70027786  1.03982116 3.469010e-17</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2      2 -0.60219853 -0.75846975 -0.44592731 2.319811e-10</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3      3  0.43744706  0.28436545  0.59052866 2.597222e-06</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 7      7  0.16635893  0.01732356  0.31539431 6.635057e-02</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 21    21 -0.36205334 -0.52299283 -0.20111385 2.153428e-04</span></span></code></pre></div>
+<p><code>glmnet_inference</code> is the following, with
+<code>prob</code> the LASSO problem glmnet solved and
+<code>scalar_noise = 0</code> for no randomization:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>prob <span class="ot">&lt;-</span> <span class="fu">glmnet_problem_from_fit</span>(fit, d<span class="sc">$</span>X, d<span class="sc">$</span>y, <span class="at">s =</span> lam)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>Z <span class="ot">&lt;-</span> <span class="sc">-</span>prob<span class="sc">$</span>G_hat <span class="sc">+</span> <span class="fu">drop</span>(prob<span class="sc">$</span>Q_hat <span class="sc">%*%</span> prob<span class="sc">$</span>beta_hat)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>li_manual <span class="ot">&lt;-</span> LassoInference<span class="sc">$</span><span class="fu">new</span>(prob<span class="sc">$</span>beta_hat, prob<span class="sc">$</span>G_hat, prob<span class="sc">$</span>Q_hat, prob<span class="sc">$</span>D, prob<span class="sc">$</span>L, prob<span class="sc">$</span>U,</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>                                <span class="at">Z_full =</span> Z, <span class="at">Sigma =</span> prob<span class="sc">$</span>Q_hat <span class="sc">/</span> n, <span class="at">scalar_noise =</span> <span class="dv">0</span>,</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>                                <span class="at">level =</span> <span class="fl">0.9</span>)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="fu">all.equal</span>(li_manual<span class="sc">$</span><span class="fu">summary</span>(), li<span class="sc">$</span><span class="fu">summary</span>())</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
+</div>
+<div id="for-a-gaussian-response" class="section level2">
+<h2>For a gaussian response</h2>
+<p>For <code>family = &quot;gaussian&quot;</code> the loss is <span class="math inline">\(\frac{1}{2n}\|y - X\beta\|^2\)</span>, so <span class="math inline">\(\hat{Q} = X&#39;X / n\)</span> and <span class="math inline">\(\text{Var}(Z) = \sigma^2 \hat{Q} / n\)</span>.
+<code>glmnet_inference</code> estimates <span class="math inline">\(\sigma^2\)</span> from the full least squares fit
+when <span class="math inline">\(n &gt; p\)</span>; otherwise pass
+<code>dispersion</code>. The relaxed and LASSO information agree.</p>
+</div>
+<div id="coverage-over-repeated-experiments" class="section level2">
+<h2>Coverage over repeated experiments</h2>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>one_replication <span class="ot">&lt;-</span> <span class="cf">function</span>() {</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  d <span class="ot">&lt;-</span> <span class="fu">make_data</span>(n)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  fit <span class="ot">&lt;-</span> glmnet<span class="sc">::</span><span class="fu">glmnet</span>(d<span class="sc">$</span>X, d<span class="sc">$</span>y, <span class="at">family =</span> <span class="st">&quot;binomial&quot;</span>, <span class="at">lambda =</span> lambda_path, <span class="at">control =</span> <span class="fu">list</span>(<span class="at">thresh =</span> <span class="fl">1e-14</span>))</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  li <span class="ot">&lt;-</span> <span class="fu">glmnet_inference</span>(fit, d<span class="sc">$</span>X, d<span class="sc">$</span>y, <span class="at">s =</span> lam, <span class="at">level =</span> <span class="fl">0.9</span>)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  summ <span class="ot">&lt;-</span> li<span class="sc">$</span><span class="fu">summary</span>()</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  keep <span class="ot">&lt;-</span> summ<span class="sc">$</span>index <span class="sc">!=</span> <span class="dv">0</span>   <span class="co"># report the selected variables, not the intercept</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  truth <span class="ot">&lt;-</span> <span class="fu">target</span>(li)[keep]</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  tabs <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">polyhedral =</span> summ[keep, ], <span class="at">naive =</span> li<span class="sc">$</span><span class="st">`</span><span class="at">_naive</span><span class="st">`</span>[keep, ])</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">method =</span> <span class="fu">rep</span>(<span class="fu">names</span>(tabs), <span class="at">each =</span> <span class="fu">sum</span>(keep)),</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>             <span class="at">cover =</span> <span class="fu">unlist</span>(<span class="fu">lapply</span>(tabs, <span class="cf">function</span>(df) df<span class="sc">$</span>lower_conf <span class="sc">&lt;=</span> truth <span class="sc">&amp;</span> truth <span class="sc">&lt;=</span> df<span class="sc">$</span>upper_conf)),</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>             <span class="at">length =</span> <span class="fu">unlist</span>(<span class="fu">lapply</span>(tabs, <span class="cf">function</span>(df) df<span class="sc">$</span>upper_conf <span class="sc">-</span> df<span class="sc">$</span>lower_conf)),</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>             <span class="at">signal =</span> <span class="fu">rep</span>(beta[summ<span class="sc">$</span>index[keep]] <span class="sc">!=</span> <span class="dv">0</span>, <span class="fu">length</span>(tabs)))</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">replicate</span>(<span class="dv">100</span>, <span class="fu">one_replication</span>(), <span class="at">simplify =</span> <span class="cn">FALSE</span>))</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="fu">with</span>(results, <span class="fu">tapply</span>(cover, <span class="fu">list</span>(method, <span class="at">signal =</span> signal), mean))</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             signal</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                  FALSE      TRUE</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   naive      0.0433213 0.8266667</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   polyhedral 0.8880866 0.8700000</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a><span class="fu">with</span>(results, <span class="fu">tapply</span>(length, <span class="fu">list</span>(method, <span class="at">signal =</span> signal), median))</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             signal</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                  FALSE      TRUE</span></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   naive      0.2995776 0.3128654</span></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   polyhedral 0.7467743 0.3401971</span></span></code></pre></div>
+<p>The naive intervals almost never cover for the selected null
+variables: they were selected because their estimates are large. The
+polyhedral intervals cover close to the nominal 90% for both, a little
+below on the true signals, which reflects the large-sample
+approximations behind the Gaussian model for <span class="math inline">\(Z\)</span>. For strong signals, far from the
+selection boundary, they are about as long as the naive intervals. For
+variables selected near the boundary they are much longer.
+Randomization, for example carving as in
+<code>vignette(&quot;glmnet_logistic&quot;, package = &quot;lassoinf&quot;)</code>, gives
+shorter intervals there.</p>
+</div>
+<div id="reference" class="section level2">
+<h2>Reference</h2>
+<p>Lee, J. D., Sun, D. L., Sun, Y. and Taylor, J. E. (2016). Exact
+post-selection inference, with application to the lasso. <em>The Annals
+of Statistics</em>, 44(3), 907–927.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

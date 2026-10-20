@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Inference after a glmnet fit: carving for logistic regression</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Inference after a glmnet fit: carving for
+logistic regression</h1>
+
+
+
+<p>This vignette shows <strong>carving</strong> in logistic regression.
+We select variables with glmnet on a random half of the data, then do
+inference with all of it, accounting for selection.
+<code>glmnet_inference</code> does this from the fitted
+<code>glmnet</code> object. It uses
+<code>glmnet_problem_from_fit</code>, which returns the LASSO problem
+glmnet solved in the original coordinates: the solution, the gradient
+and Hessian of the smooth part, the penalty weights and the bounds. For
+inference without held-out data see
+<code>vignette(&quot;no_randomization&quot;, package = &quot;lassoinf&quot;)</code>.</p>
+<div id="carving-as-randomization" class="section level2">
+<h2>Carving as randomization</h2>
+<p>glmnet divides the loss by the number of observations, and we use
+this per-observation scale throughout. On the subsample of size <span class="math inline">\(m = \pi n\)</span>, glmnet’s problem gives the
+LASSO solution <span class="math inline">\(\hat{\beta}\)</span>, the
+gradient <span class="math inline">\(G\)</span> at <span class="math inline">\(\hat{\beta}\)</span>, and the information <span class="math inline">\(\hat{Q}\)</span> at the one-step relaxed fit on
+the selected model <span class="math inline">\(E\)</span> (see
+<code>?glmnet_problem</code>). <code>LassoInference</code> linearizes
+the selection with <span class="math inline">\(\hat{Q}\)</span> and
+selects with</p>
+<p><span class="math display">\[
+Z + \omega = -G + \hat{Q}\hat{\beta}.
+\]</span></p>
+<p>The full-data statistic uses the same matrix and the full-data
+gradient <span class="math inline">\(G_{full}\)</span>, at one Newton
+step for the full-data loss on <span class="math inline">\(E\)</span>
+from <span class="math inline">\(\hat{\beta}\)</span>, <span class="math inline">\(\tilde{\beta} = \hat{\beta} - H_{E,E}^{-1}
+G_{full,E}\)</span>:</p>
+<p><span class="math display">\[
+Z = -G_{full}(\tilde{\beta}) + \hat{Q}\tilde{\beta}.
+\]</span></p>
+<p>Both are <span class="math inline">\(\hat{Q}\)</span> times
+approximations to the unpenalized MLE, on the subsample and on all the
+data. With <span class="math inline">\(I\)</span> the per-observation
+Fisher information, the subsample MLE minus the full-data MLE is
+asymptotically independent of the full-data MLE, with variance <span class="math inline">\(I^{-1}(1/m - 1/n)\)</span>, and <span class="math inline">\(\hat{Q} \approx I\)</span>. So</p>
+<p><span class="math display">\[
+\Sigma = \text{Var}(Z) \approx \hat{Q} / n, \qquad
+\text{Var}(\omega) \approx \frac{1 - \pi}{\pi}\, \Sigma,
+\]</span></p>
+<p>and selecting on a subsample is randomized selection with
+<code>scalar_noise</code> <span class="math inline">\(= (1 - \pi) /
+\pi\)</span>, which is 1 for <span class="math inline">\(\pi =
+1/2\)</span>. <code>glmnet_inference</code> with
+<code>selection_rows</code> does all of this.</p>
+</div>
+<div id="data" class="section level2">
+<h2>Data</h2>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lassoinf)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">0</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">600</span>; p <span class="ot">&lt;-</span> <span class="dv">30</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>beta <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.6</span>, <span class="sc">-</span><span class="fl">0.6</span>, <span class="fl">0.4</span>, <span class="fu">rep</span>(<span class="dv">0</span>, p <span class="sc">-</span> <span class="dv">3</span>))</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>make_data <span class="ot">&lt;-</span> <span class="cf">function</span>(n) {</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  X <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(n <span class="sc">*</span> p), n, p)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  y <span class="ot">&lt;-</span> <span class="fu">rbinom</span>(n, <span class="dv">1</span>, <span class="fu">plogis</span>(<span class="fu">drop</span>(X <span class="sc">%*%</span> beta)))</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">X =</span> X, <span class="at">y =</span> y)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> <span class="fu">make_data</span>(n)</span></code></pre></div>
+</div>
+<div id="select-on-half-of-the-data-with-glmnet" class="section level2">
+<h2>Select on half of the data with glmnet</h2>
+<p>We fit a path that ends at a fixed <span class="math inline">\(\lambda\)</span>, with the default standardization
+and an unpenalized intercept. The coordinates are <span class="math inline">\((\text{intercept}, \beta)\)</span>, so index 0 is
+the intercept. <code>glmnet_inference</code> warns if the fit does not
+satisfy the KKT conditions closely enough, so a small
+<code>thresh</code> matters.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>pi_selection <span class="ot">&lt;-</span> <span class="fl">0.5</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>lam <span class="ot">&lt;-</span> <span class="fl">0.06</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>lambda_path <span class="ot">&lt;-</span> lam <span class="sc">*</span> <span class="fu">exp</span>(<span class="fu">seq</span>(<span class="fu">log</span>(<span class="dv">10</span>), <span class="dv">0</span>, <span class="at">length.out =</span> <span class="dv">30</span>))</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>select <span class="ot">&lt;-</span> <span class="cf">function</span>(d) {</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  rows <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">nrow</span>(d<span class="sc">$</span>X), <span class="fu">round</span>(pi_selection <span class="sc">*</span> <span class="fu">nrow</span>(d<span class="sc">$</span>X)))</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  fit <span class="ot">&lt;-</span> glmnet<span class="sc">::</span><span class="fu">glmnet</span>(d<span class="sc">$</span>X[rows, ], d<span class="sc">$</span>y[rows], <span class="at">family =</span> <span class="st">&quot;binomial&quot;</span>,</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>                        <span class="at">lambda =</span> lambda_path, <span class="at">control =</span> <span class="fu">list</span>(<span class="at">thresh =</span> <span class="fl">1e-14</span>))</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fit =</span> fit, <span class="at">rows =</span> rows)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>sel <span class="ot">&lt;-</span> <span class="fu">select</span>(d)</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="fu">which</span>(<span class="fu">coef</span>(sel<span class="sc">$</span>fit, <span class="at">s =</span> lam)[<span class="sc">-</span><span class="dv">1</span>] <span class="sc">!=</span> <span class="dv">0</span>)</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 1 2 3</span></span></code></pre></div>
+</div>
+<div id="inference" class="section level2">
+<h2>Inference</h2>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>li <span class="ot">&lt;-</span> <span class="fu">glmnet_inference</span>(sel<span class="sc">$</span>fit, d<span class="sc">$</span>X, d<span class="sc">$</span>y, <span class="at">s =</span> lam, <span class="at">selection_rows =</span> sel<span class="sc">$</span>rows, <span class="at">level =</span> <span class="fl">0.9</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>li<span class="sc">$</span>scalar_noise</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 1</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>summ <span class="ot">&lt;-</span> li<span class="sc">$</span><span class="fu">summary</span>()</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>summ<span class="sc">$</span>variable <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(summ<span class="sc">$</span>index <span class="sc">==</span> <span class="dv">0</span>, <span class="st">&quot;(Intercept)&quot;</span>, <span class="fu">paste0</span>(<span class="st">&quot;x&quot;</span>, summ<span class="sc">$</span>index))</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>summ</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   index    beta_hat lower_conf upper_conf      p_value    variable</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0     0 -0.09794322 -0.1604769  0.2091305 8.675623e-01 (Intercept)</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1     1  0.37009397  0.6443921  0.9557616 2.042810e-14          x1</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2     2 -0.25187169 -0.7054899 -0.3597215 3.304804e-06          x2</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3     3  0.09067492  0.1822282  0.5512053 1.654996e-03          x3</span></span></code></pre></div>
+<p>The estimate for the selected model is <span class="math inline">\(W
+Z_E\)</span>, with <span class="math inline">\(W =
+\hat{Q}_{E,E}^{-1}\)</span>, and its target is <span class="math inline">\(W (\hat{Q}\beta^*)_E\)</span>, with <span class="math inline">\(\beta^* = (0, \beta)\)</span> the true
+coefficients including the intercept. When <span class="math inline">\(E\)</span> contains all the true signals, the
+target is <span class="math inline">\(\beta^*_E\)</span>. Otherwise it
+is the projection of <span class="math inline">\(\beta^*\)</span> onto
+the coordinates in <span class="math inline">\(E\)</span>, in the metric
+given by the information matrix <span class="math inline">\(\hat{Q}\)</span>.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>target <span class="ot">&lt;-</span> <span class="cf">function</span>(li) <span class="fu">drop</span>(li<span class="sc">$</span>W <span class="sc">%*%</span> (li<span class="sc">$</span>Q_hat <span class="sc">%*%</span> <span class="fu">c</span>(<span class="dv">0</span>, beta))[li<span class="sc">$</span>E <span class="sc">+</span> <span class="dv">1</span>])</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>summ<span class="sc">$</span>truth <span class="ot">&lt;-</span> <span class="fu">target</span>(li)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>summ<span class="sc">$</span>cover <span class="ot">&lt;-</span> summ<span class="sc">$</span>lower_conf <span class="sc">&lt;=</span> summ<span class="sc">$</span>truth <span class="sc">&amp;</span> summ<span class="sc">$</span>truth <span class="sc">&lt;=</span> summ<span class="sc">$</span>upper_conf</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>summ[, <span class="fu">c</span>(<span class="st">&quot;variable&quot;</span>, <span class="st">&quot;lower_conf&quot;</span>, <span class="st">&quot;upper_conf&quot;</span>, <span class="st">&quot;p_value&quot;</span>, <span class="st">&quot;truth&quot;</span>, <span class="st">&quot;cover&quot;</span>)]</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      variable lower_conf upper_conf      p_value         truth cover</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0 (Intercept) -0.1604769  0.2091305 8.675623e-01 -1.796405e-20  TRUE</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1          x1  0.6443921  0.9557616 2.042810e-14  6.000000e-01 FALSE</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2          x2 -0.7054899 -0.3597215 3.304804e-06 -6.000000e-01  TRUE</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3          x3  0.1822282  0.5512053 1.654996e-03  4.000000e-01  TRUE</span></span></code></pre></div>
+<p>For comparison, <code>li$&quot;_naive&quot;</code> holds Wald intervals that
+use all the data and ignore selection. Data splitting refits the
+selected model on the half of the data not used for selection:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>splitting <span class="ot">&lt;-</span> <span class="cf">function</span>(d, rows, li, <span class="at">level =</span> <span class="fl">0.9</span>) {</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  held_out <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(<span class="fu">seq_len</span>(<span class="fu">nrow</span>(d<span class="sc">$</span>X)), rows)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  X1 <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="dv">1</span>, d<span class="sc">$</span>X)[held_out, li<span class="sc">$</span>E <span class="sc">+</span> <span class="dv">1</span>, drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  fit <span class="ot">&lt;-</span> <span class="fu">glm.fit</span>(X1, d<span class="sc">$</span>y[held_out], <span class="at">family =</span> <span class="fu">binomial</span>())</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  est <span class="ot">&lt;-</span> <span class="fu">unname</span>(<span class="fu">coef</span>(fit))</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  mu <span class="ot">&lt;-</span> fit<span class="sc">$</span>fitted.values</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  sd <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(<span class="fu">diag</span>(<span class="fu">solve</span>(<span class="fu">crossprod</span>(X1, X1 <span class="sc">*</span> (mu <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">-</span> mu))))))</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  q <span class="ot">&lt;-</span> <span class="fu">qnorm</span>(<span class="dv">1</span> <span class="sc">-</span> (<span class="dv">1</span> <span class="sc">-</span> level) <span class="sc">/</span> <span class="dv">2</span>)</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">index =</span> li<span class="sc">$</span>E, <span class="at">estimate =</span> est, <span class="at">lower_conf =</span> est <span class="sc">-</span> q <span class="sc">*</span> sd, <span class="at">upper_conf =</span> est <span class="sc">+</span> q <span class="sc">*</span> sd)</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>li<span class="sc">$</span><span class="st">`</span><span class="at">_naive</span><span class="st">`</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   index    beta_hat lower_conf  upper_conf      p_value</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0     0 -0.05541122 -0.2022343  0.09141183 5.347510e-01</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1     1  0.80118217  0.6465780  0.95578637 1.542972e-17</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2     2 -0.55326082 -0.7105093 -0.39601230 7.155738e-09</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3     3  0.42623038  0.2744639  0.57799682 3.846473e-06</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="fu">splitting</span>(d, sel<span class="sc">$</span>rows, li)</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   index    estimate lower_conf upper_conf</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1     0  0.04189285 -0.1713128  0.2550985</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2     1  0.91872578  0.6617891  1.1756625</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3     2 -0.53284884 -0.7485171 -0.3171805</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4     3  0.44722400  0.2334200  0.6610280</span></span></code></pre></div>
+<p>The held-out refit targets the coefficients of the best-fitting
+logistic model on <span class="math inline">\(X_E\)</span>. That is the
+same as the target above when <span class="math inline">\(E\)</span>
+contains all the true signals.</p>
+</div>
+<div id="coverage-over-repeated-experiments" class="section level2">
+<h2>Coverage over repeated experiments</h2>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>one_replication <span class="ot">&lt;-</span> <span class="cf">function</span>() {</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  d <span class="ot">&lt;-</span> <span class="fu">make_data</span>(n)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  sel <span class="ot">&lt;-</span> <span class="fu">select</span>(d)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  li <span class="ot">&lt;-</span> <span class="fu">glmnet_inference</span>(sel<span class="sc">$</span>fit, d<span class="sc">$</span>X, d<span class="sc">$</span>y, <span class="at">s =</span> lam, <span class="at">selection_rows =</span> sel<span class="sc">$</span>rows, <span class="at">level =</span> <span class="fl">0.9</span>)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  summ <span class="ot">&lt;-</span> li<span class="sc">$</span><span class="fu">summary</span>()</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  keep <span class="ot">&lt;-</span> summ<span class="sc">$</span>index <span class="sc">!=</span> <span class="dv">0</span>   <span class="co"># report the selected variables, not the intercept</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  truth <span class="ot">&lt;-</span> <span class="fu">target</span>(li)[keep]</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  covers <span class="ot">&lt;-</span> <span class="cf">function</span>(df) (df<span class="sc">$</span>lower_conf <span class="sc">&lt;=</span> truth <span class="sc">&amp;</span> truth <span class="sc">&lt;=</span> df<span class="sc">$</span>upper_conf)</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  lengths <span class="ot">&lt;-</span> <span class="cf">function</span>(df) df<span class="sc">$</span>upper_conf <span class="sc">-</span> df<span class="sc">$</span>lower_conf</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>  tabs <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">carving =</span> summ[keep, ], <span class="at">naive =</span> li<span class="sc">$</span><span class="st">`</span><span class="at">_naive</span><span class="st">`</span>[keep, ],</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>               <span class="at">splitting =</span> <span class="fu">splitting</span>(d, sel<span class="sc">$</span>rows, li)[keep, ])</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">method =</span> <span class="fu">rep</span>(<span class="fu">names</span>(tabs), <span class="at">each =</span> <span class="fu">sum</span>(keep)),</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>             <span class="at">cover =</span> <span class="fu">unlist</span>(<span class="fu">lapply</span>(tabs, covers)), <span class="at">length =</span> <span class="fu">unlist</span>(<span class="fu">lapply</span>(tabs, lengths)),</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>             <span class="at">signal =</span> <span class="fu">rep</span>(beta[summ<span class="sc">$</span>index[keep]] <span class="sc">!=</span> <span class="dv">0</span>, <span class="fu">length</span>(tabs)))</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">replicate</span>(<span class="dv">100</span>, <span class="fu">one_replication</span>(), <span class="at">simplify =</span> <span class="cn">FALSE</span>))</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a><span class="fu">data.frame</span>(<span class="at">coverage =</span> <span class="fu">tapply</span>(results<span class="sc">$</span>cover, results<span class="sc">$</span>method, mean),</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>           <span class="at">median_length =</span> <span class="fu">tapply</span>(results<span class="sc">$</span>length, results<span class="sc">$</span>method, median))</span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;            coverage median_length</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; carving   0.8969359     0.3641605</span></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; naive     0.8328691     0.3093225</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; splitting 0.9247911     0.4400042</span></span></code></pre></div>
+<p>Carving and data splitting both have close to the nominal 90%
+coverage. Carving also uses the half of the data that selected the
+model, so its intervals are shorter. The naive intervals ignore
+selection and undercover, almost entirely on the selected null
+variables:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">with</span>(results, <span class="fu">tapply</span>(cover, <span class="fu">list</span>(method, <span class="at">signal =</span> signal), mean))</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;            signal</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                 FALSE      TRUE</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   carving   0.8815789 0.9010601</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   naive     0.5000000 0.9222615</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   splitting 0.9210526 0.9257951</span></span></code></pre></div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
